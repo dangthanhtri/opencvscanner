@@ -19,13 +19,17 @@
       <div id="vid_container">
         <video id="video" autoplay playsinline></video>
         <div id="video_overlay"></div>
+        <canvas id="camera--sensor"></canvas>
+        <img id="takenImg"></img>
       </div>
+
       <div id="gui_controls">
         <button
           id="switchCameraButton"
           name="switch Camera"
           type="button"
           aria-pressed="false"
+          style="display: none;"
         ></button>
         <button id="takePhotoButton" name="take Photo" type="button"></button>
         <button
@@ -33,6 +37,7 @@
           name="toggle FullScreen"
           type="button"
           aria-pressed="false"
+          style="display: none;"
         ></button>
       </div>
     </div>

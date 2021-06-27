@@ -10,10 +10,13 @@ var takeSnapshotUI = createClickFeedbackUI();
 
 var video;
 var takePhotoButton;
-var toggleFullScreenButton;
+//var toggleFullScreenButton;
 var switchCameraButton;
 var amountOfCameras = 0;
 var currentFacingMode = 'environment';
+const cameraOutput  = document.querySelector("#takenImg"), 
+      cameraInput  = document.querySelector("#video"), 
+      cameraSensor = document.querySelector("#camera--sensor");
 
 // this function counts the amount of video inputs
 // it replaces DetectRTC that was previously implemented.
@@ -91,46 +94,56 @@ function initCameraUI() {
   video = document.getElementById('video');
 
   takePhotoButton = document.getElementById('takePhotoButton');
-  toggleFullScreenButton = document.getElementById('toggleFullScreenButton');
+  //toggleFullScreenButton = document.getElementById('toggleFullScreenButton');
   switchCameraButton = document.getElementById('switchCameraButton');
 
   // https://developer.mozilla.org/nl/docs/Web/HTML/Element/button
   // https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Techniques/Using_the_button_role
 
   takePhotoButton.addEventListener('click', function () {
+    console.log(cameraInput.style.display);
     takeSnapshotUI();
-    takeSnapshot();
+    takeSnapshot2();
+    if (cameraInput.style.display == 'block') {
+      cameraInput.style.display = 'none';
+      cameraOutput.style.display = 'block';
+      takePhotoButton.style.backgroundImage="url(img/ic_fullscreen_white_48px.svg)";
+    } else  {
+      cameraInput.style.display = 'block';
+      cameraOutput.style.display = 'none';
+      takePhotoButton.style.backgroundImage="url(img/ic_photo_camera_white_48px.svg)";
+    }
   });
 
   // -- fullscreen part
 
-  function fullScreenChange() {
-    if (screenfull.isFullscreen) {
-      toggleFullScreenButton.setAttribute('aria-pressed', true);
-    } else {
-      toggleFullScreenButton.setAttribute('aria-pressed', false);
-    }
-  }
+  // function fullScreenChange() {
+  //   if (screenfull.isFullscreen) {
+  //     toggleFullScreenButton.setAttribute('aria-pressed', true);
+  //   } else {
+  //     toggleFullScreenButton.setAttribute('aria-pressed', false);
+  //   }
+  // }
 
-  if (screenfull.isEnabled) {
-    screenfull.on('change', fullScreenChange);
+  // if (screenfull.isEnabled) {
+  //   screenfull.on('change', fullScreenChange);
 
-    toggleFullScreenButton.style.display = 'block';
+  //   toggleFullScreenButton.style.display = 'block';
 
-    // set init values
-    fullScreenChange();
+  //   // set init values
+  //   fullScreenChange();
 
-    toggleFullScreenButton.addEventListener('click', function () {
-      screenfull.toggle(document.getElementById('container')).then(function () {
-        console.log(
-          'Fullscreen mode: ' +
-            (screenfull.isFullscreen ? 'enabled' : 'disabled'),
-        );
-      });
-    });
-  } else {
-    console.log("iOS doesn't support fullscreen (yet)");
-  }
+  //   toggleFullScreenButton.addEventListener('click', function () {
+  //     screenfull.toggle(document.getElementById('container')).then(function () {
+  //       console.log(
+  //         'Fullscreen mode: ' +
+  //           (screenfull.isFullscreen ? 'enabled' : 'disabled'),
+  //       );
+  //     });
+  //   });
+  // } else {
+  //   console.log("iOS doesn't support fullscreen (yet)");
+  // }
 
   // -- switch camera part
   if (amountOfCameras > 1) {
@@ -259,6 +272,15 @@ function takeSnapshot() {
     // do something with the image blob
   });
 }
+
+function takeSnapshot2() {
+  cameraSensor.width = video.videoWidth;
+  cameraSensor.height = video.videoHeight;
+  cameraSensor.getContext("2d").drawImage(video, 0, 0);
+  cameraOutput.src = cameraSensor.toDataURL("image/webp");
+  cameraOutput.classList.add("taken");
+  // track.stop();
+};
 
 // https://hackernoon.com/how-to-use-javascript-closures-with-confidence-85cd1f841a6b
 // closure; store this in a variable and call the variable as function
