@@ -1,5 +1,5 @@
 // Set constraints for the video stream
-var constraints = { video: { facingMode: "environment", mirrored: true }, audio: false };
+var constraints = { video: { facingMode: "environment", mirrored: false }, audio: false };
 var track = null;
 
 // Define constants
