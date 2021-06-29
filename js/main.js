@@ -8,7 +8,6 @@
 
 var takeSnapshotUI = createClickFeedbackUI();
 
-var video;
 var takePhotoButton;
 //var toggleFullScreenButton;
 var switchCameraButton;
@@ -90,7 +89,6 @@ document.addEventListener('DOMContentLoaded', function (event) {
 });
 
 function initCameraUI() {
-  video = document.getElementById('video');
 
   takePhotoButton = document.getElementById('takePhotoButton');
   //toggleFullScreenButton = document.getElementById('toggleFullScreenButton');
@@ -220,7 +218,7 @@ function initCameraStream() {
 
   function handleSuccess(stream) {
     window.stream = stream; // make stream available to browser console
-    video.srcObject = stream;
+    cameraInput.srcObject = stream;
 
     if (constraints.video.facingMode) {
       if (constraints.video.facingMode === 'environment') {
@@ -244,15 +242,15 @@ function initCameraStream() {
 function takeSnapshot() {
   // if you'd like to show the canvas add it to the DOM
   var canvas = document.createElement('canvas');
-
-  var width = video.videoWidth;
-  var height = video.videoHeight;
+  canvas.id = "canvas"; //Tạo id xài cho dòng này cv.imshow('canvas', dst);
+  var width = cameraInput.videoWidth;
+  var height = cameraInput.videoHeight;
 
   canvas.width = width;
   canvas.height = height;
 
   context = canvas.getContext('2d');
-  context.drawImage(video, 0, 0, width, height);
+  context.drawImage(cameraInput, 0, 0, width, height);
 
   // polyfil if needed https://github.com/blueimp/JavaScript-Canvas-to-Blob
 
@@ -272,14 +270,48 @@ function takeSnapshot() {
     img = new Image();
 
     img.onload = function() {
-        //img.src = src;
-        URL.revokeObjectURL(this.src);     // clean-up memory
-        document.getElementById("videoOutput").appendChild(this);
-        document.body.appendChild(this);   // add image to DOM
+      //img.src = src;
+      URL.revokeObjectURL(this.src);     // clean-up memory
+      document.getElementById("videoOutput").innerHTML = ''; // Xóa cái cũ
+      document.getElementById("videoOutput").appendChild(canvas); // Add canvas
+      document.body.appendChild(this);   // add image to DOM
+
+      // do something with the image blob
+      console.log("Get video : "+ cameraInput)
+      let cap = new cv.VideoCapture(cameraInput);
+      video.height = video.videoHeight;
+      video.width = video.videoWidth;
+      let src = new cv.Mat(height, width, cv.CV_8UC4);
+      let dst = new cv.Mat(height, width, cv.CV_8UC4);
+
+      const FPS = 30;
+      function processVideo() {
+          try {
+              if (!window.stream) {
+                  // clean and stop.
+                  src.delete();
+                  dst.delete();
+                  return;
+              }
+              let begin = Date.now();
+              // start processing.
+              cap.read(src);
+              cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
+              cv.imshow('canvas', dst);
+              // schedule the next one.
+              let delay = 1000/FPS - (Date.now() - begin);
+              setTimeout(processVideo, delay);
+          } catch (err) {
+              console.error(err);
+          }
+      };
+
+      // schedule the first one.
+      setTimeout(processVideo, 0);
     }
 
     img.src = url; 
-    // do something with the image blob
+
   });
 }
 
