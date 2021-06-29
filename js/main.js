@@ -260,14 +260,14 @@ function takeSnapshot() {
   var width = cameraInput.videoWidth;
   var height = cameraInput.videoHeight;
 
-  var scaleSize = (width / height);
-  var heightScale = (window.innerHeight * scaleSize);
+  // var scaleSize = (width / height);
+  // var heightScale = (window.innerHeight * scaleSize);
 
-  canvas.width = window.innerWidth;
-  canvas.height = heightScale;
+  // canvas.width = window.innerWidth;
+  // canvas.height = heightScale;
 
-  // canvas.width = width;
-  // canvas.height = height;
+  canvas.width = width;
+  canvas.height = height;
 
   context = canvas.getContext('2d');
   context.drawImage(cameraInput, 0, 0, width, height);
@@ -305,7 +305,7 @@ function takeSnapshot() {
       let src = new cv.Mat(height, width, cv.CV_8UC4);
       let dst = new cv.Mat(height, width, cv.CV_8UC4);
       cap.read(src);
-      window.src = src;
+      //window.src = src;
       let edges = new cv.Mat();
       cv.Canny(src, edges, 100, 200);
       // cv.imshow($("canvas")[0],edges);
