@@ -14,9 +14,8 @@ var takePhotoButton;
 var switchCameraButton;
 var amountOfCameras = 0;
 var currentFacingMode = 'environment';
-const cameraOutput  = document.querySelector("#takenImg"), 
-      cameraInput  = document.querySelector("#video"), 
-      cameraSensor = document.querySelector("#camera--sensor");
+const cameraOutput  = document.querySelector("#videoOutput"), 
+      cameraInput  = document.querySelector("#video");
 
 // this function counts the amount of video inputs
 // it replaces DetectRTC that was previously implemented.
@@ -102,8 +101,6 @@ function initCameraUI() {
 
   takePhotoButton.addEventListener('click', function () {
     console.log(cameraInput.style.display);
-    takeSnapshotUI();
-    takeSnapshot2();
     if (cameraInput.style.display == 'block') {
       cameraInput.style.display = 'none';
       cameraOutput.style.display = 'block';
@@ -113,6 +110,8 @@ function initCameraUI() {
       cameraOutput.style.display = 'none';
       takePhotoButton.style.backgroundImage="url(img/ic_photo_camera_white_48px.svg)";
     }
+    takeSnapshotUI();
+    takeSnapshot();
   });
 
   // -- fullscreen part
@@ -269,18 +268,20 @@ function takeSnapshot() {
 
   // some API's (like Azure Custom Vision) need a blob with image data
   getCanvasBlob(canvas).then(function (blob) {
+    url = URL.createObjectURL(blob),
+    img = new Image();
+
+    img.onload = function() {
+        //img.src = src;
+        URL.revokeObjectURL(this.src);     // clean-up memory
+        document.getElementById("videoOutput").appendChild(this);
+        document.body.appendChild(this);   // add image to DOM
+    }
+
+    img.src = url; 
     // do something with the image blob
   });
 }
-
-function takeSnapshot2() {
-  cameraSensor.width = video.videoWidth;
-  cameraSensor.height = video.videoHeight;
-  cameraSensor.getContext("2d").drawImage(video, 0, 0);
-  cameraOutput.src = cameraSensor.toDataURL("image/webp");
-  cameraOutput.classList.add("taken");
-  // track.stop();
-};
 
 // https://hackernoon.com/how-to-use-javascript-closures-with-confidence-85cd1f841a6b
 // closure; store this in a variable and call the variable as function
