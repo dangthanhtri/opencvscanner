@@ -1,0 +1,200 @@
+function init(){
+    //bind events
+    console.log("Initing...");
+    $(".view-select input:file").bind("change",function(e){
+        const files = e.target.files;
+        process(files[0]);
+        switchView("clip");
+        console.log(cv);
+    });
+
+    canvas = $("canvas")[0];
+
+      if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
+      console.log("moblie");
+      canvas.ontouchstart = canvasClick;
+      canvas.ontouchend = stopDragging;
+      canvas.ontouchcancel = stopDragging;
+      canvas.ontouchmove = dragCircle;
+      } else{
+      console.log("not moblie");
+      canvas.onmousedown = canvasClick;
+      canvas.onmouseup = stopDragging;
+      canvas.onmouseout = stopDragging;
+      canvas.onmousemove = dragCircle;
+    }
+ 
+  switchView("select");
+}
+
+function loadImage(file){
+    return new Promise((resolve,reject)=>{
+        const url = URL.createObjectURL(file);
+        let img = new Image();
+        img.onload = ()=>{
+            resolve(img);
+        };
+        img.src = url;
+    });
+}
+function canvasClick(e){
+  var x = e.pageX - e.target.offsetLeft;
+  var y = e.pageY - e.target.offsetTop;
+  
+  for(var i=0; i<points.length; i++) {
+    
+    if(Math.pow(points[i].x - x , 2) + Math.pow(points[i].y - y , 2) < 100 ){
+      points[i].selected = true;
+      console.log(points[i]);
+    } else {
+      if(points[i].selected) points[i].selected = false;
+    }
+  }
+  console.log("Đang chạm vào");
+}
+function dragCircle(e){
+//   console.log(points);
+  for(var i=0; i<points.length; i++) if(points[i].selected) {
+    points[i].x =e.pageX - e.target.offsetLeft;
+    points[i].y = e.pageY - e.target.offsetTop;
+    //console.log("xxxx1x");
+    console.log("Đang kéo");
+  }
+  draw();
+}
+function stopDragging(e){
+  for(var i=0; i<points.length; i++) {
+    points[i].selected = false;
+  }
+  console.log("Ngưng kéo");
+}
+function draw(){
+  canvas = $("canvas")[0];
+  context = canvas.getContext("2d");
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(img,0,0,canvas.width, canvas.height);
+  //context.drawImage(img,0,0,img.width,img.height); Chỗ này xài dòng trên vì nếu không sẽ bị thay đổi hình ảnh khi click vào
+  drawPoints(points);
+}
+function drawPoints(points){
+    let context = $("canvas")[0].getContext('2d');
+    for(var i=0; i<points.length; i++) {
+        var circle = points[i];
+ 
+        // 绘制圆圈
+        context.globalAlpha = 0.85;
+        context.beginPath();
+        context.arc(circle.x, circle.y, 5, 0, Math.PI*2);
+        context.fillStyle = "yellow";
+        context.strokeStyle = "yellow";
+        context.lineWidth = 5;
+        context.fill();
+        context.stroke();
+        context.beginPath();
+        context.moveTo(circle.x, circle.y);
+        context.lineTo( points[i-1>=0?i-1:3].x,  points[i-1>=0?i-1:3].y);
+        context.stroke();
+      
+      }
+}
+
+window.process = async (file)=>{ 
+    let ctx = $("canvas")[0].getContext('2d');
+    const img = await loadImage(file);
+    var scaleSize = (img.width / img.height);
+    var heightScale = (window.innerHeight * scaleSize);
+    //console.log(heightScale);
+    $("canvas")[0].width = window.innerWidth;
+    $("canvas")[0].height = heightScale;
+    //$("canvas")[0].width = img.width;
+    //$("canvas")[0].height = img.height;
+    window.img = img;
+    ctx.drawImage(img,0,0,window.innerWidth,heightScale);
+    //ctx.drawImage(img,0,0,img.width,img.height);
+
+    let image = cv.imread($("canvas")[0]);
+    //BAD IDEA BEGIN
+    window.image = image;
+    //BAD IDEA END
+    let edges = new cv.Mat();
+    cv.Canny(image,edges,100,200);
+   // cv.imshow($("canvas")[0],edges);
+    let contours = new cv.MatVector();
+    let hierarchy = new cv.Mat();
+
+    cv.findContours(edges,contours,hierarchy,cv.RETR_LIST,cv.CHAIN_APPROX_SIMPLE);
+    
+    let cnts = []
+    for(let i=0;i<contours.size();i++){
+        const tmp = contours.get(i);
+        const peri = cv.arcLength(tmp,true);
+        let approx = new cv.Mat();
+        
+        let result = {
+            area:cv.contourArea(tmp),
+            points:[]
+        };
+
+        cv.approxPolyDP(tmp,approx,0.02*peri,true);
+        const pointsData = approx.data32S;
+        for(let j=0;j<pointsData.length/2;j++)
+            result.points.push({x:pointsData[2*j],y:pointsData[2*j+1]});
+        
+        if(result.points.length===4) cnts.push(result);
+        
+    }
+    cnts.sort((a,b)=>b.area-a.area);
+
+    console.log(cnts);
+    console.log("Đã tìm thấy văn bản");
+    window.points = cnts[0].points;
+    drawPoints(cnts[0].points);
+
+
+}
+
+function process2(){
+  console.log($("canvas")[0].width, $("canvas")[0].height);
+    cv.cvtColor(image, image, cv.COLOR_BGR2GRAY); //Chuyển sang ảnh trắng đen
+    //use window.points & $("canvas") as its input .... TOO STUPID!!!
+    
+    const tl = points[0],bl=points[1],br=points[2],tr=points[3]; //stands for top-left,top-right ....
+
+    const width = parseInt(Math.max(
+        Math.sqrt((br.x-bl.x)**2 + (br.y-bl.y)**2),
+        Math.sqrt((tr.x-tl.x)**2 + (tr.y-tl.y)**2),
+    ));
+
+    const height = parseInt(Math.max(
+        Math.sqrt((tr.x-br.x)**2 + (tr.y-br.y)**2),
+        Math.sqrt((tl.x-bl.x)**2 + (tl.y-bl.y)**2),
+    ));
+    console.log("width: ",width);
+    console.log("height: ", height);
+    let size = new cv.Size(width,height);
+    const from = cv.matFromArray(4,1,cv.CV_32FC2,[points[0].x,points[0].y,points[1].x,points[1].y,points[2].x,points[2].y,points[3].x,points[3].y]);
+    //const to = cv.matFromArray(4,1,cv.CV_32FC2,[0,0,width-1,0, width-1,height-1,0,height-1]);
+    const to = cv.matFromArray(4,1,cv.CV_32FC2,[0,0,0,height-1, width-1,height-1,width-1,0]);
+    const M = cv.getPerspectiveTransform(from,to);
+    
+    let out = new cv.Mat();
+    
+    //size.width = width;
+    //size.height = height;
+    console.log("new width: ",width);
+    console.log("new height: ", height);
+    
+    cv.warpPerspective(image,out,M,size);
+
+    cv.imshow($("canvas")[0],out);
+    
+    console.log($("canvas")[0].width, $("canvas")[0].height);
+    ///console.log(out);
+    M.delete(); from.delete(); to.delete();
+    $("#imgConvert").hide();
+}
+
+function switchView(name){
+    $(".view-select , .view-clip , .view-save").hide();
+    $(`.view-${name}`).show();
+}
