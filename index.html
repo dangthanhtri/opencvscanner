@@ -13,31 +13,34 @@
     <meta name="author" content="Kasper Kamperman" />
     <title>Mobile First Camera Template</title>
     <link rel="stylesheet" type="text/css" href="style.css" />
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
   </head>
   <body>
     <div id="container">
       <div id="vid_container">
         <video id="video" autoplay playsinline></video>
         <div id="video_overlay"></div>
-        <div id="videoOutput"></div>
+      </div>
+
+      <div id="videoOutput">
       </div>
 
       <div id="gui_controls">
-        <button
+        <!-- <button
           id="switchCameraButton"
           name="switch Camera"
           type="button"
           aria-pressed="false"
           style="display: none;"
-        ></button>
+        ></button> -->
         <button id="takePhotoButton" name="take Photo" type="button"></button>
-        <button
+        <!-- <button
           id="toggleFullScreenButton"
           name="toggle FullScreen"
           type="button"
           aria-pressed="false"
           style="display: none;"
-        ></button>
+        ></button> -->
       </div>
     </div>
     <script src="js/opencv.js"></script>

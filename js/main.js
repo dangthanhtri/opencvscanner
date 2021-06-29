@@ -9,12 +9,13 @@
 var takeSnapshotUI = createClickFeedbackUI();
 
 var takePhotoButton;
+var mode = true;
 //var toggleFullScreenButton;
 var switchCameraButton;
 var amountOfCameras = 0;
 var currentFacingMode = 'environment';
-const cameraOutput  = document.querySelector("#videoOutput"), 
-      cameraInput  = document.querySelector("#video");
+const cameraOutput = document.querySelector("#videoOutput"),
+  cameraInput = document.querySelector("#video");
 
 // this function counts the amount of video inputs
 // it replaces DetectRTC that was previously implemented.
@@ -97,18 +98,20 @@ function initCameraUI() {
   // https://developer.mozilla.org/nl/docs/Web/HTML/Element/button
   // https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Techniques/Using_the_button_role
 
+
+
   takePhotoButton.addEventListener('click', function () {
     console.log(cameraInput.style.display);
-    if (cameraInput.style.display == 'block') {
-      cameraInput.style.display = 'none';
-      cameraOutput.style.display = 'block';
-      takePhotoButton.style.backgroundImage="url(img/ic_fullscreen_white_48px.svg)";
-    } else  {
-      cameraInput.style.display = 'block';
-      cameraOutput.style.display = 'none';
-      takePhotoButton.style.backgroundImage="url(img/ic_photo_camera_white_48px.svg)";
+    if (mode == true) {
+      switchView("videoOutput");
+      mode = false;
+      takePhotoButton.style.backgroundImage = "url(img/ic_fullscreen_white_48px.svg)";
+    } else {
+      mode = true;
+      switchView("video");
+      takePhotoButton.style.backgroundImage = "url(img/ic_photo_camera_white_48px.svg)";
     }
-    takeSnapshotUI();
+    //takeSnapshotUI();
     takeSnapshot();
   });
 
@@ -241,8 +244,15 @@ function initCameraStream() {
 
 function takeSnapshot() {
   // if you'd like to show the canvas add it to the DOM
+
+  if ($('#imgCaptured').is(':visible')) {
+    // add whatever code you want to run here.
+    var myobj = document.getElementById("imgCaptured");
+    myobj.remove();
+  }
   var canvas = document.createElement('canvas');
   canvas.id = "canvas"; //Tạo id xài cho dòng này cv.imshow('canvas', dst);
+
   var width = cameraInput.videoWidth;
   var height = cameraInput.videoHeight;
 
@@ -266,51 +276,34 @@ function takeSnapshot() {
 
   // some API's (like Azure Custom Vision) need a blob with image data
   getCanvasBlob(canvas).then(function (blob) {
-    url = URL.createObjectURL(blob),
-    img = new Image();
 
-    img.onload = function() {
-      //img.src = src;
+    url = URL.createObjectURL(blob),
+      img = new Image();
+
+    img.onload = function () {
+      img.src = "";
       URL.revokeObjectURL(this.src);     // clean-up memory
       document.getElementById("videoOutput").innerHTML = ''; // Xóa cái cũ
       document.getElementById("videoOutput").appendChild(canvas); // Add canvas
       document.body.appendChild(this);   // add image to DOM
 
       // do something with the image blob
-      console.log("Get video : "+ cameraInput)
+      //console.log("Get video : "+ cameraInput)
       let cap = new cv.VideoCapture(cameraInput);
       video.height = video.videoHeight;
       video.width = video.videoWidth;
       let src = new cv.Mat(height, width, cv.CV_8UC4);
       let dst = new cv.Mat(height, width, cv.CV_8UC4);
-
-      const FPS = 30;
-      function processVideo() {
-          try {
-              if (!window.stream) {
-                  // clean and stop.
-                  src.delete();
-                  dst.delete();
-                  return;
-              }
-              let begin = Date.now();
-              // start processing.
-              cap.read(src);
-              cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
-              cv.imshow('canvas', dst);
-              // schedule the next one.
-              let delay = 1000/FPS - (Date.now() - begin);
-              setTimeout(processVideo, delay);
-          } catch (err) {
-              console.error(err);
-          }
-      };
-
-      // schedule the first one.
-      setTimeout(processVideo, 0);
+      cap.read(src);
+      cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
+      cv.imshow('canvas', dst);
+      src.delete();
+      dst.delete();
     }
 
-    img.src = url; 
+    img.src = url;
+    img.setAttribute("id", "imgCaptured");
+
 
   });
 }
@@ -344,4 +337,10 @@ function createClickFeedbackUI() {
       setTimeout(setFalseAgain, timeOut);
     }
   };
+}
+
+
+function switchView(name) {
+  $("#video , #videoOutput ").hide();
+  $("#" + name).show();
 }
