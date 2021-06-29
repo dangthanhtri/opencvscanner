@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function (event) {
 });
 
 function initCameraUI() {
-
+  console.log(mode);
   takePhotoButton = document.getElementById('takePhotoButton');
   //toggleFullScreenButton = document.getElementById('toggleFullScreenButton');
   switchCameraButton = document.getElementById('switchCameraButton');
@@ -101,7 +101,6 @@ function initCameraUI() {
 
 
   takePhotoButton.addEventListener('click', function () {
-    console.log(cameraInput.style.display);
     if (mode == true) {
       switchView("videoOutput");
       mode = false;
@@ -114,6 +113,10 @@ function initCameraUI() {
     //takeSnapshotUI();
     takeSnapshot();
   });
+
+  function scan() {
+
+  }
 
   // -- fullscreen part
 
@@ -253,11 +256,18 @@ function takeSnapshot() {
   var canvas = document.createElement('canvas');
   canvas.id = "canvas"; //Tạo id xài cho dòng này cv.imshow('canvas', dst);
 
+
   var width = cameraInput.videoWidth;
   var height = cameraInput.videoHeight;
 
-  canvas.width = width;
-  canvas.height = height;
+  var scaleSize = (width / height);
+  var heightScale = (window.innerHeight * scaleSize);
+
+  canvas.width = window.innerWidth;
+  canvas.height = heightScale;
+
+  // canvas.width = width;
+  // canvas.height = height;
 
   context = canvas.getContext('2d');
   context.drawImage(cameraInput, 0, 0, width, height);
@@ -295,10 +305,40 @@ function takeSnapshot() {
       let src = new cv.Mat(height, width, cv.CV_8UC4);
       let dst = new cv.Mat(height, width, cv.CV_8UC4);
       cap.read(src);
-      cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
-      cv.imshow('canvas', dst);
-      src.delete();
-      dst.delete();
+      window.src = src;
+      let edges = new cv.Mat();
+      cv.Canny(src, edges, 100, 200);
+      // cv.imshow($("canvas")[0],edges);
+      let contours = new cv.MatVector();
+      let hierarchy = new cv.Mat();
+
+      cv.findContours(edges, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+
+      let cnts = []
+      for (let i = 0; i < contours.size(); i++) {
+        const tmp = contours.get(i);
+        const peri = cv.arcLength(tmp, true);
+        let approx = new cv.Mat();
+
+        let result = {
+          area: cv.contourArea(tmp),
+          points: []
+        };
+
+        cv.approxPolyDP(tmp, approx, 0.02 * peri, true);
+        const pointsData = approx.data32S;
+        for (let j = 0; j < pointsData.length / 2; j++)
+          result.points.push({ x: pointsData[2 * j], y: pointsData[2 * j + 1] });
+
+        if (result.points.length === 4) cnts.push(result);
+
+      }
+      cnts.sort((a, b) => b.area - a.area);
+
+      console.log(cnts);
+      console.log("Đã tìm thấy văn bản");
+      window.points = cnts[0].points;
+      drawPoints(cnts[0].points);
     }
 
     img.src = url;
@@ -308,6 +348,35 @@ function takeSnapshot() {
   });
 }
 
+function draw(){
+  canvas = $("canvas")[0];
+  context = canvas.getContext("2d");
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(img,0,0,canvas.width, canvas.height);
+  //context.drawImage(img,0,0,img.width,img.height); Chỗ này xài dòng trên vì nếu không sẽ bị thay đổi hình ảnh khi click vào
+  drawPoints(points);
+}
+function drawPoints(points){
+    let context = $("canvas")[0].getContext('2d');
+    for(var i=0; i<points.length; i++) {
+        var circle = points[i];
+ 
+        // 绘制圆圈
+        context.globalAlpha = 0.85;
+        context.beginPath();
+        context.arc(circle.x, circle.y, 5, 0, Math.PI*2);
+        context.fillStyle = "yellow";
+        context.strokeStyle = "yellow";
+        context.lineWidth = 5;
+        context.fill();
+        context.stroke();
+        context.beginPath();
+        context.moveTo(circle.x, circle.y);
+        context.lineTo( points[i-1>=0?i-1:3].x,  points[i-1>=0?i-1:3].y);
+        context.stroke();
+      
+      }
+}
 // https://hackernoon.com/how-to-use-javascript-closures-with-confidence-85cd1f841a6b
 // closure; store this in a variable and call the variable as function
 // eg. var takeSnapshotUI = createClickFeedbackUI();
