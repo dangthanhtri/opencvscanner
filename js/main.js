@@ -263,16 +263,15 @@ function takeSnapshot() {
   // canvas.width = width;
   // canvas.height = height;
 
-  var scaleSize = (width / height);
-  var heightScale = (window.innerHeight * scaleSize);
+  var scaleSize = (height / width);
+  var heightScale = (window.innerWidth * scaleSize);
 
   canvas.width = window.innerWidth;
   canvas.height = heightScale;
 
-  
 
   context = canvas.getContext('2d');
-  context.drawImage(cameraInput, 0, 0, width, height);
+  context.drawImage(cameraInput, 0, 0, canvas.width, canvas.height);
 
   console.log(canvas.width, canvas.height);
   // polyfil if needed https://github.com/blueimp/JavaScript-Canvas-to-Blob
@@ -306,7 +305,7 @@ function takeSnapshot() {
       video.height = video.videoHeight;
       video.width = video.videoWidth;
       let src = new cv.Mat(height, width, cv.CV_8UC4);
-      let dst = new cv.Mat(height, width, cv.CV_8UC4);
+      let dst = new cv.Mat(height, width, cv.CV_8UC1);
       cap.read(src);
       //window.src = src;
       let edges = new cv.Mat();
