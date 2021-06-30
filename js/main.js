@@ -259,19 +259,22 @@ function takeSnapshot() {
 
   var width = cameraInput.videoWidth;
   var height = cameraInput.videoHeight;
+  console.log(width, height);
+  // canvas.width = width;
+  // canvas.height = height;
 
-  // var scaleSize = (width / height);
-  // var heightScale = (window.innerHeight * scaleSize);
+  var scaleSize = (width / height);
+  var heightScale = (window.innerHeight * scaleSize);
 
-  // canvas.width = window.innerWidth;
-  // canvas.height = heightScale;
+  canvas.width = window.innerWidth;
+  canvas.height = heightScale;
 
-  canvas.width = width;
-  canvas.height = height;
+  
 
   context = canvas.getContext('2d');
   context.drawImage(cameraInput, 0, 0, width, height);
 
+  console.log(canvas.width, canvas.height);
   // polyfil if needed https://github.com/blueimp/JavaScript-Canvas-to-Blob
 
   // https://developers.google.com/web/fundamentals/primers/promises
