@@ -6,6 +6,7 @@
 
 */
 
+// Old 
 var takeSnapshotUI = createClickFeedbackUI();
 
 var takePhotoButton;
@@ -249,14 +250,12 @@ function takeSnapshot() {
   // if you'd like to show the canvas add it to the DOM
 
   if ($('#imgCaptured').is(':visible')) {
-    // add whatever code you want to run here.
     var myobj = document.getElementById("imgCaptured");
     myobj.remove();
   }
   var canvas = document.createElement('canvas');
   canvas.id = "canvas"; //Tạo id xài cho dòng này cv.imshow('canvas', dst);
-
-
+  
   var width = cameraInput.videoWidth;
   var height = cameraInput.videoHeight;
   console.log(width, height);
@@ -350,34 +349,34 @@ function takeSnapshot() {
   });
 }
 
-function draw(){
+function draw() {
   canvas = $("canvas")[0];
   context = canvas.getContext("2d");
   context.clearRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(img,0,0,canvas.width, canvas.height);
+  context.drawImage(img, 0, 0, canvas.width, canvas.height);
   //context.drawImage(img,0,0,img.width,img.height); Chỗ này xài dòng trên vì nếu không sẽ bị thay đổi hình ảnh khi click vào
   drawPoints(points);
 }
-function drawPoints(points){
-    let context = $("canvas")[0].getContext('2d');
-    for(var i=0; i<points.length; i++) {
-        var circle = points[i];
- 
-        // 绘制圆圈
-        context.globalAlpha = 0.85;
-        context.beginPath();
-        context.arc(circle.x, circle.y, 5, 0, Math.PI*2);
-        context.fillStyle = "yellow";
-        context.strokeStyle = "yellow";
-        context.lineWidth = 5;
-        context.fill();
-        context.stroke();
-        context.beginPath();
-        context.moveTo(circle.x, circle.y);
-        context.lineTo( points[i-1>=0?i-1:3].x,  points[i-1>=0?i-1:3].y);
-        context.stroke();
-      
-      }
+function drawPoints(points) {
+  let context = $("canvas")[0].getContext('2d');
+  for (var i = 0; i < points.length; i++) {
+    var circle = points[i];
+
+    // 绘制圆圈
+    context.globalAlpha = 0.85;
+    context.beginPath();
+    context.arc(circle.x, circle.y, 5, 0, Math.PI * 2);
+    context.fillStyle = "yellow";
+    context.strokeStyle = "yellow";
+    context.lineWidth = 5;
+    context.fill();
+    context.stroke();
+    context.beginPath();
+    context.moveTo(circle.x, circle.y);
+    context.lineTo(points[i - 1 >= 0 ? i - 1 : 3].x, points[i - 1 >= 0 ? i - 1 : 3].y);
+    context.stroke();
+
+  }
 }
 // https://hackernoon.com/how-to-use-javascript-closures-with-confidence-85cd1f841a6b
 // closure; store this in a variable and call the variable as function
@@ -414,4 +413,85 @@ function createClickFeedbackUI() {
 function switchView(name) {
   $("#video , #videoOutput ").hide();
   $("#" + name).show();
+}
+
+function canvasClick(e){
+  var x = e.pageX - e.target.offsetLeft;
+  var y = e.pageY - e.target.offsetTop;
+  
+  for(var i=0; i<points.length; i++) {
+    
+    if(Math.pow(points[i].x - x , 2) + Math.pow(points[i].y - y , 2) < 100 ){
+      points[i].selected = true;
+      console.log(points[i]);
+    } else {
+      if(points[i].selected) points[i].selected = false;
+    }
+  }
+  console.log("Đang chạm vào");
+}
+function dragCircle(e){
+//   console.log(points);
+  for(var i=0; i<points.length; i++) if(points[i].selected) {
+    points[i].x =e.pageX - e.target.offsetLeft;
+    points[i].y = e.pageY - e.target.offsetTop;
+    //console.log("xxxx1x");
+    console.log("Đang kéo");
+  }
+  draw();
+}
+function stopDragging(e){
+  for(var i=0; i<points.length; i++) {
+    points[i].selected = false;
+  }
+  console.log("Ngưng kéo");
+}
+function draw(){
+  canvas = $("canvas")[0];
+  context = canvas.getContext("2d");
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(img,0,0,canvas.width, canvas.height);
+  //context.drawImage(img,0,0,img.width,img.height); Chỗ này xài dòng trên vì nếu không sẽ bị thay đổi hình ảnh khi click vào
+  drawPoints(points);
+}
+function drawPoints(points){
+    let context = $("canvas")[0].getContext('2d');
+    for(var i=0; i<points.length; i++) {
+        var circle = points[i];
+ 
+        // 绘制圆圈
+        context.globalAlpha = 0.85;
+        context.beginPath();
+        context.arc(circle.x, circle.y, 5, 0, Math.PI*2);
+        context.fillStyle = "yellow";
+        context.strokeStyle = "yellow";
+        context.lineWidth = 5;
+        context.fill();
+        context.stroke();
+        context.beginPath();
+        context.moveTo(circle.x, circle.y);
+        context.lineTo( points[i-1>=0?i-1:3].x,  points[i-1>=0?i-1:3].y);
+        context.stroke();
+      
+      }
+}
+
+function init(){
+
+  canvas = $("canvas")[0];
+
+    if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
+    console.log("moblie");
+    canvas.ontouchstart = canvasClick;
+    canvas.ontouchend = stopDragging;
+    canvas.ontouchcancel = stopDragging;
+    canvas.ontouchmove = dragCircle;
+    } else{
+    console.log("not moblie");
+    canvas.onmousedown = canvasClick;
+    canvas.onmouseup = stopDragging;
+    canvas.onmouseout = stopDragging;
+    canvas.onmousemove = dragCircle;
+  }
+
 }
