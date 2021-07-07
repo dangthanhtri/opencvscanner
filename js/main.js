@@ -1,17 +1,5 @@
-/*
-
->> kasperkamperman.com - 2018-04-18
->> kasperkamperman.com - 2020-05-17
->> https://www.kasperkamperman.com/blog/camera-template/
-
-*/
-
-// Old 
-var takeSnapshotUI = createClickFeedbackUI();
-
 var takePhotoButton;
 var mode = true;
-//var toggleFullScreenButton;
 var switchCameraButton;
 var amountOfCameras = 0;
 var currentFacingMode = 'environment';
@@ -93,7 +81,6 @@ document.addEventListener('DOMContentLoaded', function (event) {
 function initCameraUI() {
   console.log(mode);
   takePhotoButton = document.getElementById('takePhotoButton');
-  //toggleFullScreenButton = document.getElementById('toggleFullScreenButton');
   switchCameraButton = document.getElementById('switchCameraButton');
 
   // https://developer.mozilla.org/nl/docs/Web/HTML/Element/button
@@ -111,43 +98,8 @@ function initCameraUI() {
       switchView("video");
       takePhotoButton.style.backgroundImage = "url(img/ic_photo_camera_white_48px.svg)";
     }
-    //takeSnapshotUI();
     takeSnapshot();
   });
-
-  function scan() {
-
-  }
-
-  // -- fullscreen part
-
-  // function fullScreenChange() {
-  //   if (screenfull.isFullscreen) {
-  //     toggleFullScreenButton.setAttribute('aria-pressed', true);
-  //   } else {
-  //     toggleFullScreenButton.setAttribute('aria-pressed', false);
-  //   }
-  // }
-
-  // if (screenfull.isEnabled) {
-  //   screenfull.on('change', fullScreenChange);
-
-  //   toggleFullScreenButton.style.display = 'block';
-
-  //   // set init values
-  //   fullScreenChange();
-
-  //   toggleFullScreenButton.addEventListener('click', function () {
-  //     screenfull.toggle(document.getElementById('container')).then(function () {
-  //       console.log(
-  //         'Fullscreen mode: ' +
-  //           (screenfull.isFullscreen ? 'enabled' : 'disabled'),
-  //       );
-  //     });
-  //   });
-  // } else {
-  //   console.log("iOS doesn't support fullscreen (yet)");
-  // }
 
   // -- switch camera part
   if (amountOfCameras > 1) {
@@ -247,122 +199,82 @@ function initCameraStream() {
 }
 
 function takeSnapshot() {
-  // if you'd like to show the canvas add it to the DOM
+    // if you'd like to show the canvas add it to the DOM
 
-  if ($('#imgCaptured').is(':visible')) {
-    var myobj = document.getElementById("imgCaptured");
-    myobj.remove();
-  }
-  var canvas = document.createElement('canvas');
-  canvas.id = "canvas"; //Tạo id xài cho dòng này cv.imshow('canvas', dst);
-  
-  var width = cameraInput.videoWidth;
-  var height = cameraInput.videoHeight;
-  console.log(width, height);
-  // canvas.width = width;
-  // canvas.height = height;
-
-  var scaleSize = (height / width);
-  var heightScale = (window.innerWidth * scaleSize);
-
-  canvas.width = window.innerWidth;
-  canvas.height = heightScale;
-
-
-  context = canvas.getContext('2d');
-  context.drawImage(cameraInput, 0, 0, canvas.width, canvas.height);
-
-  console.log(canvas.width, canvas.height);
-  // polyfil if needed https://github.com/blueimp/JavaScript-Canvas-to-Blob
-
-  // https://developers.google.com/web/fundamentals/primers/promises
-  // https://stackoverflow.com/questions/42458849/access-blob-value-outside-of-canvas-toblob-async-function
-  function getCanvasBlob(canvas) {
-    return new Promise(function (resolve, reject) {
-      canvas.toBlob(function (blob) {
-        resolve(blob);
-      }, 'image/jpeg');
-    });
-  }
-
-  // some API's (like Azure Custom Vision) need a blob with image data
-  getCanvasBlob(canvas).then(function (blob) {
-
-    url = URL.createObjectURL(blob),
-      img = new Image();
-
-    img.onload = function () {
-      img.src = "";
-      URL.revokeObjectURL(this.src);     // clean-up memory
-      document.getElementById("videoOutput").innerHTML = ''; // Xóa cái cũ
-      document.getElementById("videoOutput").appendChild(canvas); // Add canvas
-      document.body.appendChild(this);   // add image to DOM
-
-      // do something with the image blob
-      //console.log("Get video : "+ cameraInput)
-      let cap = new cv.VideoCapture(cameraInput);
-      video.height = video.videoHeight;
-      video.width = video.videoWidth;
-      let src = new cv.Mat(height, width, cv.CV_8UC4);
-      let dst = new cv.Mat(height, width, cv.CV_8UC1);
-      cap.read(src);
-      //window.src = src;
-      let edges = new cv.Mat();
-      cv.Canny(src, edges, 100, 200);
-      // cv.imshow($("canvas")[0],edges);
-      let contours = new cv.MatVector();
-      let hierarchy = new cv.Mat();
-
-      cv.findContours(edges, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
-
-      let cnts = []
-      for (let i = 0; i < contours.size(); i++) {
-        const tmp = contours.get(i);
-        const peri = cv.arcLength(tmp, true);
-        let approx = new cv.Mat();
-
-        let result = {
-          area: cv.contourArea(tmp),
-          points: []
-        };
-
-        cv.approxPolyDP(tmp, approx, 0.02 * peri, true);
-        const pointsData = approx.data32S;
-        for (let j = 0; j < pointsData.length / 2; j++)
-          result.points.push({ x: pointsData[2 * j], y: pointsData[2 * j + 1] });
-
-        if (result.points.length === 4) cnts.push(result);
-
-      }
-      cnts.sort((a, b) => b.area - a.area);
-
-      console.log(cnts);
-      console.log("Đã tìm thấy văn bản");
-      window.points = cnts[0].points;
-      drawPoints(cnts[0].points);
+    if ($('#imgCaptured').is(':visible')) {
+      var myobj = document.getElementById("imgCaptured");
+      myobj.remove();
     }
+    var canvas = document.createElement('canvas');
+    canvas.id = "canvas"; //Tạo id xài cho dòng này cv.imshow('canvas', dst);
+    
+    var width = cameraInput.videoWidth;
+    var height = cameraInput.videoHeight;
+    console.log(width, height);
 
-    img.src = url;
-    img.setAttribute("id", "imgCaptured");
+    var scaleSize = (height / width);
+    var heightScale = (window.innerWidth * scaleSize);
+
+    canvas.width = window.innerWidth;
+    canvas.height = heightScale;
 
 
-  });
+    context = canvas.getContext('2d');
+    context.drawImage(cameraInput, 0, 0, canvas.width, canvas.height);
+    console.log(canvas.width, canvas.height);
+
+    // Create an image
+    const img = new Image();
+    img.onload = function() {
+      window.img = img;
+    }
+    img.src = canvas.toDataURL('image/jpeg,1');
+
+    document.getElementById("videoOutput").innerHTML = ''; // Xóa cái cũ
+    document.getElementById("videoOutput").appendChild(canvas); // Add canvas
+
+    let image = cv.imread(canvas);
+    let edges = new cv.Mat();
+    cv.Canny(image, edges, 100, 200);
+    // cv.imshow($("canvas")[0],edges);
+    let contours = new cv.MatVector();
+    let hierarchy = new cv.Mat();
+
+    cv.findContours(edges, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+
+    let cnts = []
+    for (let i = 0; i < contours.size(); i++) {
+      const tmp = contours.get(i);
+      const peri = cv.arcLength(tmp, true);
+      let approx = new cv.Mat();
+
+      let result = {
+        area: cv.contourArea(tmp),
+        points: []
+      };
+
+      cv.approxPolyDP(tmp, approx, 0.02 * peri, true);
+      const pointsData = approx.data32S;
+      for (let j = 0; j < pointsData.length / 2; j++)
+        result.points.push({ x: pointsData[2 * j], y: pointsData[2 * j + 1] });
+
+      if (result.points.length === 4) cnts.push(result);
+
+    }
+    cnts.sort((a, b) => b.area - a.area);
+
+    console.log(cnts);
+    console.log("Đã tìm thấy văn bản");
+    window.points = cnts[0].points;
+    drawPoints(cnts[0].points, canvas);
 }
 
-function draw() {
-  canvas = $("canvas")[0];
-  context = canvas.getContext("2d");
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(img, 0, 0, canvas.width, canvas.height);
-  //context.drawImage(img,0,0,img.width,img.height); Chỗ này xài dòng trên vì nếu không sẽ bị thay đổi hình ảnh khi click vào
-  drawPoints(points);
-}
-function drawPoints(points) {
-  let context = $("canvas")[0].getContext('2d');
+
+function drawPoints(points, canvas) {
+  let context = canvas.getContext('2d');
   for (var i = 0; i < points.length; i++) {
     var circle = points[i];
 
-    // 绘制圆圈
     context.globalAlpha = 0.85;
     context.beginPath();
     context.arc(circle.x, circle.y, 5, 0, Math.PI * 2);
@@ -377,11 +289,9 @@ function drawPoints(points) {
     context.stroke();
 
   }
+
+  init(canvas);
 }
-// https://hackernoon.com/how-to-use-javascript-closures-with-confidence-85cd1f841a6b
-// closure; store this in a variable and call the variable as function
-// eg. var takeSnapshotUI = createClickFeedbackUI();
-// takeSnapshotUI();
 
 function createClickFeedbackUI() {
   // in order to give feedback that we actually pressed a button.
@@ -416,8 +326,8 @@ function switchView(name) {
 }
 
 function canvasClick(e){
-  var x = e.pageX - e.target.offsetLeft;
-  var y = e.pageY - e.target.offsetTop;
+  var x = e.touches[0].pageX - e.target.offsetLeft;
+  var y = e.touches[0].pageY - e.target.offsetTop;
   
   for(var i=0; i<points.length; i++) {
     
@@ -431,14 +341,14 @@ function canvasClick(e){
   console.log("Đang chạm vào");
 }
 function dragCircle(e){
-//   console.log(points);
+  //   console.log(points);
   for(var i=0; i<points.length; i++) if(points[i].selected) {
-    points[i].x =e.pageX - e.target.offsetLeft;
-    points[i].y = e.pageY - e.target.offsetTop;
+    points[i].x =e.touches[0].pageX - e.target.offsetLeft;
+    points[i].y = e.touches[0].pageY - e.target.offsetTop;
     //console.log("xxxx1x");
     console.log("Đang kéo");
   }
-  draw();
+  draw(e.target);
 }
 function stopDragging(e){
   for(var i=0; i<points.length; i++) {
@@ -446,39 +356,16 @@ function stopDragging(e){
   }
   console.log("Ngưng kéo");
 }
-function draw(){
-  canvas = $("canvas")[0];
+function draw(canvas){
+
   context = canvas.getContext("2d");
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.drawImage(img,0,0,canvas.width, canvas.height);
   //context.drawImage(img,0,0,img.width,img.height); Chỗ này xài dòng trên vì nếu không sẽ bị thay đổi hình ảnh khi click vào
-  drawPoints(points);
-}
-function drawPoints(points){
-    let context = $("canvas")[0].getContext('2d');
-    for(var i=0; i<points.length; i++) {
-        var circle = points[i];
- 
-        // 绘制圆圈
-        context.globalAlpha = 0.85;
-        context.beginPath();
-        context.arc(circle.x, circle.y, 5, 0, Math.PI*2);
-        context.fillStyle = "yellow";
-        context.strokeStyle = "yellow";
-        context.lineWidth = 5;
-        context.fill();
-        context.stroke();
-        context.beginPath();
-        context.moveTo(circle.x, circle.y);
-        context.lineTo( points[i-1>=0?i-1:3].x,  points[i-1>=0?i-1:3].y);
-        context.stroke();
-      
-      }
+  drawPoints(points, canvas);
 }
 
-function init(){
-
-  canvas = $("canvas")[0];
+function init(canvas){
 
     if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
     console.log("moblie");
@@ -493,5 +380,4 @@ function init(){
     canvas.onmouseout = stopDragging;
     canvas.onmousemove = dragCircle;
   }
-
 }
